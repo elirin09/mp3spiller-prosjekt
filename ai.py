@@ -1,19 +1,73 @@
 from tkinter import *
 from tkinter import filedialog
 from PIL import Image, ImageTk
-from ai import MusicPlayer
 import pygame
 import os
 try:
     from mutagen.mp3 import MP3
 except ImportError:
     MP3 = None
-#linje 13-125 er skrevet med hjelp av chatgpt, og er en del av ai.py.
-#Det er en klasse som lager et GUI for en MP3 spiller,
-#hvor brukeren kan importere MP3 filer, spille av, pause, stoppe,
-#og slette sanger fra en spilleliste. GUI-en er laget med tkinter,
-#og pygame brukes for å håndtere avspillingen av musikken.
 
+class MusicPlayer:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("MP3 Spiller")
+        self.root.geometry("720x700")
+        self.root.config(bg="black")
+        
+        pygame.mixer.init()
+        
+        self.playlist = []
+        self.current_song_index = 0
+        self.is_paused = False
+        
+        # Title Label
+        title_label = Label(self.root, text="MP3 Spiller", fg="white", bg="black", font=("Arial", 20, "bold"))
+        title_label.pack(pady=10)
+        
+        # Import and delete buttons frame
+        top_buttons_frame = Frame(self.root, bg="black")
+        top_buttons_frame.pack(pady=5)
+        
+        import_btn = Button(top_buttons_frame, text="Importer MP3 filer", command=self.import_files, bg="gray", fg="white", font=("Arial", 12))
+        import_btn.grid(row=0, column=0, padx=5)
+        
+        delete_btn = Button(top_buttons_frame, text="🗑 Slett sang", command=self.delete_song, bg="#8B0000", fg="white", font=("Arial", 12))
+        delete_btn.grid(row=0, column=1, padx=5)
+        
+        # Playlist display
+        playlist_label = Label(self.root, text="Sangliste:", fg="white", bg="black", font=("Arial", 12))
+        playlist_label.pack(anchor=W, padx=20)
+        
+        self.songlist = Listbox(self.root, bg="gray20", fg="white", width=90, height=12, font=("Arial", 10))
+        self.songlist.pack(padx=20, pady=5)
+        self.songlist.bind('<<ListboxSelect>>', self.select_song)
+        
+        # Current song label
+        self.current_song_label = Label(self.root, text="Ingen sang spilles", fg="yellow", bg="black", font=("Arial", 11))
+        self.current_song_label.pack(pady=5)
+        
+        # Control frame
+        control_frame = Frame(self.root, bg="black")
+        control_frame.pack(pady=10)
+        
+        # Control buttons
+        self.previous_btn = Button(control_frame, text="⏮ Forrige", command=self.previous_song, bg="gray", fg="white", font=("Arial", 11), width=15)
+        self.previous_btn.grid(row=0, column=0, padx=5)
+        
+        self.play_btn = Button(control_frame, text="▶ Spill", command=self.play_song, bg="green", fg="white", font=("Arial", 11), width=15)
+        self.play_btn.grid(row=0, column=1, padx=5)
+        
+        self.pause_btn = Button(control_frame, text="⏸ Pause", command=self.pause_song, bg="orange", fg="white", font=("Arial", 11), width=15)
+        self.pause_btn.grid(row=0, column=2, padx=5)
+        
+        self.next_btn = Button(control_frame, text="Neste ⏭", command=self.next_song, bg="gray", fg="white", font=("Arial", 11), width=15)
+        self.next_btn.grid(row=0, column=3, padx=5)
+        
+        self.stop_btn = Button(control_frame, text="⏹ Stopp", command=self.stop_song, bg="red", fg="white", font=("Arial", 11), width=15)
+        self.stop_btn.grid(row=0, column=4, padx=5)
+    
+    
     def import_files(self):
         """Importer MP3 filer fra datamaskinen"""
         files = filedialog.askopenfilenames(
@@ -46,11 +100,11 @@ except ImportError:
             return
         
         if self.is_paused:
-            # Fortsett hvis satt på pause
+            # Resume if paused
             pygame.mixer.music.unpause()
             self.is_paused = False
         else:
-            # Spill av fra gjeldende sangindeks
+            # Play from current song index
             song = self.playlist[self.current_song_index]
             try:
                 pygame.mixer.music.load(song)
@@ -101,7 +155,7 @@ except ImportError:
         song_index = selection[0]
         song_name = os.path.basename(self.playlist[song_index])
         
-        # Stopp avspillingen hvis du sletter gjeldende sang
+        # Stop playing if deleting current song
         if song_index == self.current_song_index:
             pygame.mixer.music.stop()
             self.is_paused = False
@@ -127,4 +181,3 @@ if __name__ == "__main__":
     root = Tk()
     player = MusicPlayer(root)
     root.mainloop()
-
